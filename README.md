@@ -41,6 +41,6 @@ You can use the script as a module by your agent, or deliver and run it only onc
 Those who don't have an easy to use agent can run command below on your OPS server.
 
 ```
-cat hosts.txt|xargs -P 5 -I{} sh -c 'ssh root@{} -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null "wget http://your_site/to_download/log4j2_vul_scanner.py -O /tmp/log4j2_vul_scanner.py -q && python /tmp/log4j2_vul_scanner.py && /usr/bin/rm /tmp/log4j2_vul_scanner.py" > /home/log4j/logs.txt||exit 0'
+cat hosts.txt|xargs -P 5 -I{} sh -c 'ssh root@{} -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null "wget http://your_site/to_download/log4j2_vul_scanner.py -O /tmp/log4j2_vul_scanner.py -q && python /tmp/log4j2_vul_scanner.py && /usr/bin/rm /tmp/log4j2_vul_scanner.py" > ./logs.txt||exit 0'
 ```
 
