@@ -188,6 +188,14 @@ def scan_a_fat_jar(process, file_path, ancestor, recurse_level=1):
         # with zipfile.ZipFile(file_path, 'r') as obj_zip:    # python2.6 not work
         obj_zip = zipfile.ZipFile(file_path, 'r')
         for _name in obj_zip.namelist():
+            if _name.endswith('org.apache.logging.log4j/log4j-core/pom.properties'):
+                content = obj_zip.open(_name).read()
+                for line in content.split('\n'):
+                    line = line.strip()
+                    if line.startswith('version='):
+                        version_string = line[len('version='):].split()[0]
+                        version_check(process, '', '', ancestor, pom_version=version_string)
+
             if not _name.endswith('.jar'):
                 continue
             base_name_child = os.path.basename(_name)
@@ -205,7 +213,7 @@ def scan_a_fat_jar(process, file_path, ancestor, recurse_level=1):
             else:
                 child_jar_file = obj_zip.open(_name)
                 a_child_jar = IO_Lib(child_jar_file.read())
-                if get_memory_usage() > 200.0:    # 200 MB at most
+                if get_memory_usage() > 300.0:    # 300 MB at most
                     print_msg('[ERROR] Memory exceeded, further scan stopped')
                     process['tag'] += 'out_of_memory,'
                 else:
@@ -217,10 +225,13 @@ def scan_a_fat_jar(process, file_path, ancestor, recurse_level=1):
         print_msg('[scan_a_fat_jar.error]: %s' % str(e))
 
 
-def version_check(process, file_path, base_name, ancestor):
+def version_check(process, file_path, base_name, ancestor, pom_version=''):
     try:
         global temp_fixed_PIDs
-        log4j_version = base_name[len('log4j-core-'):-4].lower()
+        if pom_version:
+            log4j_version = pom_version
+        else:
+            log4j_version = base_name[len('log4j-core-'):-4].lower()
         process['log4j_version'] += log4j_version + ","
         process['log4j_jar_path'] += ancestor + ","
         if log4j_version.find('{company}sec') > 0:    # safe version, replace it to your company name
@@ -235,7 +246,8 @@ def version_check(process, file_path, base_name, ancestor):
             process['tag'] += 'safe,'
             print_msg('A safe version log4j found: %s' % log4j_version)
             return
-        else:
+
+        if pom_version == '':
             class_found = False
             # with zipfile.ZipFile(file_path, 'r') as obj_zip:
             obj_zip = zipfile.ZipFile(file_path, 'r')
@@ -247,31 +259,31 @@ def version_check(process, file_path, base_name, ancestor):
             if not class_found:
                 return
 
-            if int_version >= 210:
-                if process['pid'] not in reported_PIDs_jvm:
-                    reported_PIDs_jvm.add(process['pid'])
-                    if process['jvm_args_enabled'] is True:
-                        process['tag'] += 'jvm_args_fix,'
-                        temp_fixed_PIDs[process['pid']] = True
-                        print_msg('[Warning] You set jvm args to fix the Log4j vulnerability before, '
-                                  'please now update to {company} sec version')
-                        print_msg('[Warning] Reference: http://mannual.domain/apache-log4j-rce-CVE-2021-45046')
-                if process['pid'] not in reported_PIDs_sys_env:
-                    reported_PIDs_sys_env.add(process['pid'])
-                    if process['sys_env_enabled'] is True:
-                        process['tag'] += 'sys_env_fix,'
-                        temp_fixed_PIDs[process['pid']] = True
-                        print_msg('[Warning] You set os environment variable to fix the Log4j vulnerability before, '
-                                  'please now update to {company} sec version')
-                        print_msg('[Warning] Reference: http://mannual.domain/apache-log4j-rce-CVE-2021-45046')
+        if int_version >= 210:
+            if process['pid'] not in reported_PIDs_jvm:
+                reported_PIDs_jvm.add(process['pid'])
+                if process['jvm_args_enabled'] is True:
+                    process['tag'] += 'jvm_args_fix,'
+                    temp_fixed_PIDs[process['pid']] = True
+                    print_msg('[Warning] You set jvm args to fix the Log4j vulnerability before, '
+                              'please now update to {company} sec version')
+                    print_msg('[Warning] Reference: http://mannual.domain/apache-log4j-rce-CVE-2021-45046')
+            if process['pid'] not in reported_PIDs_sys_env:
+                reported_PIDs_sys_env.add(process['pid'])
+                if process['sys_env_enabled'] is True:
+                    process['tag'] += 'sys_env_fix,'
+                    temp_fixed_PIDs[process['pid']] = True
+                    print_msg('[Warning] You set os environment variable to fix the Log4j vulnerability before, '
+                              'please now update to {company} sec version')
+                    print_msg('[Warning] Reference: http://mannual.domain/apache-log4j-rce-CVE-2021-45046')
 
-            if process['pid'] not in temp_fixed_PIDs and process['pid'] not in reported_PIDs:
-                reported_PIDs.add(process['pid'])
-                process['tag'] += 'vulnerable,'
-                print_msg('[Critical] Your server is vulnerable!')
-                print_msg('[Critical] Java pid: %s, log4j2 path: %s' % (process['pid'], ancestor))
-                if process['root_path'] != '':
-                    print_msg("[Critical] It's a docker container process, Image: %s" % process['docker_image'])
+        if process['pid'] not in temp_fixed_PIDs and process['pid'] not in reported_PIDs:
+            reported_PIDs.add(process['pid'])
+            process['tag'] += 'vulnerable,'
+            print_msg('[Critical] Your server is vulnerable!')
+            print_msg('[Critical] Java pid: %s, log4j2 path: %s' % (process['pid'], ancestor))
+            if process['root_path'] != '':
+                print_msg("[Critical] It's a docker container process, Image: %s" % process['docker_image'])
     except Exception as e:
         print_msg('[version_check.error]: %s' % str(e))
 

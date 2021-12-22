@@ -6,6 +6,9 @@ Scan all java processes on your host to check weather it's affected by log4j2 re
 
 Works under python2.7 / 2.6 / 3.x, no extra lib required.
 
+## Change Log
+* 2021-12-22 增加 log4j-core/pom.properties 版本检测
+
 ## 扫描逻辑
 
 1. 遍历主机上的`java`进程
@@ -29,7 +32,7 @@ Works under python2.7 / 2.6 / 3.x, no extra lib required.
 ## 稳定机制
 
 * 递归：递归解压缩jar包，最多不超过5层
-* 内存：每次解压都检测自身内存占用，至多不超过200MB。超过则跳过扫描，上报部分结果和内存错误
+* 内存：每次解压都检测自身内存占用，至多不超过300MB。超过则跳过扫描，上报部分结果和内存错误
 * 网络：扫描结束后，随机sleep 0~100秒，假设13万主机，则每秒上报的服务器大约只有1300台
 
 ## 批量扫描
