@@ -2,7 +2,7 @@
 
 Log4j 漏洞本地检测脚本，扫描主机上所有java进程，检测是否引入了有漏洞的log4j-core jar包，是否可能遭到远程代码执行攻击（CVE-2021-45046）。上传扫描报告到指定的服务器。
 
-Scan all java processes on your host to check weather it's affected by log4j2 remote code execution(CVE-2021-45046), then upload the report to your api server. 
+Scan all java processes on your host to check whether it's affected by log4j2 remote code execution(CVE-2021-45046), then upload the report to your api server. 
 
 Works under python2.7 / 2.6 / 3.x, no extra lib required.
 
@@ -33,7 +33,8 @@ Works under python2.7 / 2.6 / 3.x, no extra lib required.
 
 * 递归：递归解压缩jar包，最多不超过5层
 * 内存：每次解压都检测自身内存占用，至多不超过300MB。超过则跳过扫描，上报部分结果和内存错误
-* 网络：扫描结束后，随机sleep 0~100秒，假设13万主机，则每秒上报的服务器大约只有1300台
+* 网络：扫描结束后，随机sleep 0~10秒，假设1万主机，则每秒上报的服务器大约只有1000台
+
 
 ## 批量扫描
 
